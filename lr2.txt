@@ -47,17 +47,94 @@ group:tempgrp:rwx
 mask::rwx
 other::rwx
 
+При смене разрешений командой chmod ACL сохраняются в прежнем виде
 student@alexander-VirtualBox:~$ sudo chmod 755 StickyBit/
 [sudo] пароль для student: 
+
 student@alexander-VirtualBox:~$ getfacl StickyBit/
 # file: StickyBit/
 # owner: student
 # group: student
 user::rwx
 user:tmp3:r-x
-user:tmp4:r-x
+user:tmp4:r-x                   #effective:r-x
 group::rwx			#effective:r-x
 group:tempgrp:rwx		#effective:r-x
 mask::r-x
 other::r-x
+
+mask устанавливает эффективные максимальные права для всех пользователей и групп, прописанных в ACL 
+Пользователи сохраняют свои настройки ACL , но работают только с правами, определяекмыми настройками mask 
+
+Изменение mask
+student@alexander-VirtualBox:~/StickyBit$ setfacl -m m:rwx ../StickyBit/
+
+исКЛЮЧЕНИЕ ПОЛЬЗОВАТЕЛЯ ИЛИ ГРУППЫ ИЗ acl 
+student@alexander-VirtualBox:~/StickyBit$ setfacl -x u:tmp3 ./(для пользователя)
+student@alexander-VirtualBox:~/StickyBit$ setfacl -x g:tempgrp ./(для группы)
+
+Сброс всех ACL 
+student@alexander-VirtualBox:~/StickyBit$ setfacl -b tmp3 ./
+
+Установка наследования по умолчанию:
+student@alexander-VirtualBox:~/StickyBit$ setfacl -m d:u:tmp3:rwx ./
+
+student@alexander-VirtualBox:~/StickyBit$ getfacl ./
+# file: .
+# owner: student
+# group: student
+user::rwx
+group::rwx
+other::r-x
+default:user::rwx
+default:user:tmp3:rwx
+default:group::rwx
+default:mask::rwx
+default:other::r-x
+
+пример применения ACL по умолчанию
+student@alexander-VirtualBox:~/ACL$ getfacl PvtF/
+# file: PvtF/
+# owner: student
+# group: student
+user::rwx
+group::rwx
+other::r--
+default:user::rwx
+default:user:tmp:r-x
+default:user:tmp3:r--
+default:group::rwx
+default:mask::rwx
+default:other::r-x
+
+student@alexander-VirtualBox:~/ACL$ setfacl -m u:tmp4:r-x PvtF/
+student@alexander-VirtualBox:~/ACL$ su tmp3
+Пароль: 
+tmp3@alexander-VirtualBox:/home/student/ACL$ cd PvtF/
+bash: cd: PvtF/: Отказано в доступе
+tmp3@alexander-VirtualBox:/home/student/ACL$ exit
+exit
+student@alexander-VirtualBox:~/ACL$ cd PvtF/
+student@alexander-VirtualBox:~/ACL/PvtF$ mkdir F1
+student@alexander-VirtualBox:~/ACL/PvtF$ touch f1
+student@alexander-VirtualBox:~/ACL/PvtF$ ls -l
+итого 8
+-rw-rw-r--+ 1 student student    0 ноя 13 11:35 f1
+drwxrwxr-x+ 2 student student 4096 ноя 13 11:35 F1
+student@alexander-VirtualBox:~/ACL/PvtF$ getfacl F1
+# file: F1
+# owner: student
+# group: student
+user::rwx
+user:tmp:r-x
+user:tmp3:r--
+group::rwx
+mask::rwx
+other::r-x
+default:user::rwx
+default:user:tmp:r-x
+default:user:tmp3:r--
+default:group::rwx
+default:mask::rwx
+default:other::r-x
 
